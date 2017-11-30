@@ -11,6 +11,9 @@ import sys
 import rospy
 from std_msgs.msg import String
 
+class EvaluationError(Exception):
+	pass
+
 access_token = 'BMYORVSUUOLBANBF6OMPVJUBC2DCAR2J'
 
 def send(request, response):
@@ -25,6 +28,7 @@ client = Wit(access_token=access_token, actions=actions)
 with open("recognized_input.doc") as f:
 	data = f.read()
 possible_inputs = data.splitlines()
+will_pub = True
 
 class Speech_Corrector:
 
@@ -75,13 +79,26 @@ class Speech_Corrector:
 			for i in range(len(max_percent_val)):
 				word = max_percent_val[i]
 				if word == "ROOM":
-					max_percent_val[i] = str(important_info['room'][0]['value'])
+					try:
+						max_percent_val[i] = str(important_info['room'][0]['value'])
+					except KeyError:
+						print("Didn't quite understand...Can you try again")
+						will_pub = False
+						break
 				elif word == "COLOR":
-					max_percent_val[i] = str(important_info['color'][0]['value'])
-			print(max_percent_val)
-			self.text_pub.publish(' '.join(max_percent_val))
+					try:
+						max_percent_val[i] = str(important_info['color'][0]['value'])
+					except KeyError:
+						print("Didn't quite understand...Can you try again")
+						will_pub = False
+						break
+
+			if will_pub:
+				print(max_percent_val)
+				self.text_pub.publish(' '.join(max_percent_val))
 		else:
-			self.text_pub.publish(' '.join(data))
+			print("Didn't quite understand...Can you try again")
+			#self.text_pub.publish(' '.join(data))
 
 
 def main(args):
