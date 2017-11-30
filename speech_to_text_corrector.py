@@ -11,9 +11,19 @@ import sys
 import rospy
 from std_msgs.msg import String
 
+access_token = 'BMYORVSUUOLBANBF6OMPVJUBC2DCAR2J'
+
+def send(request, response):
+    print(response['text'])
+
+actions = {
+    'send': send,
+    }   
+
+client = Wit(access_token=access_token, actions=actions)
+
 with open("recognized_input.doc") as f:
 	data = f.read()
-	print(data.splitlines())
 possible_inputs = data.splitlines()
 
 class Speech_Corrector:
@@ -23,17 +33,26 @@ class Speech_Corrector:
 		self.text_pub = rospy.Publisher('wit/final_text', String, queue_size = 1)
 
 	def callback(self, data): #assumes only one part is given, only one location is given
-		mess = client.message(str(data))
+		words = data
+		data = str(data).split()[1:]
+		print(data)
+
+		if 'rooms' in data:
+			data[data.index('rooms')] = str('room')
+
+		mess = client.message(str(words))
 		print("Recieved this message: " + str(mess))
+
 		important_info = mess['entities']
+
 		if len(important_info) != 0:
 			for entity in important_info:
-				print(entity + ": " + important_info[entity][0]['value'])
+				print(entity + ": " + str(important_info[entity][0]['value']))
 
-	#def correct(self, data):
 			percentage_dict = {}
 			for line in possible_inputs:
 				matching = 0
+				line = line.split()
 				for word in line:
 					if word in data:
 						matching += 1
@@ -41,10 +60,10 @@ class Speech_Corrector:
 						matching += 1
 					elif word == "COLOR" and 'color' in important_info:
 						matching += 1
-				if matching/max([len(data), len(line)]) in percentage_dict:
-					percentage_dict[max([len(data), len(line)])].append(line)
+				if (matching/max([len(data), len(line)])) in percentage_dict:
+					percentage_dict[(matching/max([len(data), len(line)]))].append(line)
 				else:
-					percentage_dict[max([len(data), len(line)])] = [line]
+					percentage_dict[(matching/max([len(data), len(line)]))] = [line]
 
 			max_percent = -1
 			max_percent_val = None
@@ -52,14 +71,17 @@ class Speech_Corrector:
 				if key > max_percent:
 					max_percent = key
 					max_percent_val = percentage_dict[key][0]
-			for word in max_percent_val:
+
+			for i in range(len(max_percent_val)):
+				word = max_percent_val[i]
 				if word == "ROOM":
-					word = important_info['room'][0]['value']
+					max_percent_val[i] = str(important_info['room'][0]['value'])
 				elif word == "COLOR":
-					word = important_info['color'][0]['value']
-			self.text_pub.publish(max_percent_val)
+					max_percent_val[i] = str(important_info['color'][0]['value'])
+			print(max_percent_val)
+			self.text_pub.publish(' '.join(max_percent_val))
 		else:
-			self.text_pub.publish(data)
+			self.text_pub.publish(' '.join(data))
 
 
 def main(args):
@@ -67,4 +89,7 @@ def main(args):
     rospy.init_node("speech_corrector", anonymous=True)
 
     rospy.spin()
+
+if __name__ == '__main__':
+    main(sys.argv)
 

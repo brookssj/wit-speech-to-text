@@ -37,7 +37,7 @@ class textHandler:
 		important_info = mess['entities']
 		if len(important_info) != 0:
 			for entity in important_info:
-				print(entity + ": " + important_info[entity][0]['value'])
+				print(entity + ": " + str(important_info[entity][0]['value']))
 
 		#print(important_info) ###What should this be returned as?
 
