@@ -11,10 +11,10 @@ import sys
 import rospy
 from std_msgs.msg import String
 
-class EvaluationError(Exception):
-	pass
-
 access_token = 'BMYORVSUUOLBANBF6OMPVJUBC2DCAR2J'
+
+if len(sys.argv) == 2:
+	access_token = sys.argv[1]
 
 def send(request, response):
     print(response['text'])

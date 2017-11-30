@@ -13,6 +13,9 @@ API_ENDPOINT = 'https://api.wit.ai/speech'
 # Wit.ai api access token
 wit_access_token = 'BMYORVSUUOLBANBF6OMPVJUBC2DCAR2J'
 
+if len(sys.argv) == 2:
+    wit_access_token = sys.argv[1]
+
 class speechHandler:
     def __init__(self):
         self.text_pub = rospy.Publisher('wit/init_text', String, queue_size = 1)
